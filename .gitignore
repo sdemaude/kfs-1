@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# Build artifacts
+*.o
+*.a
+*.d
+*.bin
+*.iso
+*.elf
+build/
+dist/
+
+# Generated files
+*.log
+*.map
+compile_commands.json
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.txt
+*.pdf
