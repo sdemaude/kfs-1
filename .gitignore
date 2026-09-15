@@ -10,6 +10,7 @@
 *.elf
 build/
 dist/
+isodir/
 
 # Generated files
 *.log
@@ -21,5 +22,6 @@ compile_commands.json
 .idea/
 *.swp
 *.swo
+*.swn
 *.txt
 *.pdf
