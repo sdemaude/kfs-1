@@ -10,7 +10,6 @@
 *.elf
 build/
 dist/
-isodir/
 
 # Generated files
 *.log
