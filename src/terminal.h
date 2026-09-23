@@ -3,12 +3,16 @@
 
 # include <stddef.h>
 # include <stdint.h>
+# include <stdbool.h>
 # include "io.h"
 
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
 #define VGA_MEMORY  0xB8000
 
+#define MAX_FB_ROWS 75
+
+#define SCREEN_COUNT 4
 
 /* Hardware text mode color constants. */
 enum vga_color {
@@ -31,12 +35,16 @@ enum vga_color {
 };
 
 void update_cursor(void);
+void update_screen(void);
 void navigate_arrow_keys(uint8_t scancode);
 void terminal_initialize(void);
 void terminal_setcolor(enum vga_color fg, enum vga_color bg);
 void terminal_putchar(char c);
 int terminal_write(const char* data, size_t size);
 void terminal_writestring(const char* data);
+
+extern bool has_screen_updated;
+extern int current_screen;
 
 
 #endif // TERMINAL_H

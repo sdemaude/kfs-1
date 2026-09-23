@@ -1,9 +1,12 @@
 NAME := isodir/boot/myos
+ISO  := myos.iso
 
 CROSS ?= x86_64-elf-
 CC    := $(CROSS)gcc
 LD    := $(CROSS)ld
 AS    := nasm
+GRUB_MKRESCUE := i686-elf-grub-mkrescue
+QEMU  := qemu-system-i386
 
 OBJ_DIR := build
 SRC_DIR := src
@@ -25,7 +28,7 @@ LDFLAGS  := -m elf_i386 -T $(LINKER) -nostdlib
 
 .DEFAULT_GOAL := all
 
-.PHONY: all clean fclean re check-tools
+.PHONY: all run clean fclean re check-tools
 
 all: check-tools $(NAME)
 
@@ -47,6 +50,12 @@ $(NAME): $(OBJS) $(LINKER)
 	@mkdir -p $(@D)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS)
 
+$(ISO): $(NAME) isodir/boot/grub/grub.cfg
+	$(GRUB_MKRESCUE) -o $@ isodir
+
+run: $(ISO)
+	$(QEMU) -cdrom $(ISO) -display cocoa,zoom-to-fit=on
+
 $(OBJ_DIR)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
@@ -63,6 +72,6 @@ clean:
 	rm -rf $(OBJ_DIR)
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(NAME) $(ISO)
 
 re: fclean all

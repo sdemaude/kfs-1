@@ -31,5 +31,8 @@ void kernel_main(void)
 	while (1) {
 		// Wait for keyboard input
 		keyboard_handler();
+				if (has_screen_updated) {
+			update_screen();
+		}
 	}
 }
