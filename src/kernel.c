@@ -22,17 +22,19 @@ void kernel_main(void)
 	/* Initialize terminal interface */
 	terminal_initialize();
 
-	// TODO : add function to print the welcome message
+	// TODO : add a welcome message to each screen + how to switch between screens using F1-F4 + number of the current screen
 	terminal_setcolor(VGA_COLOR_CYAN, VGA_COLOR_BLACK);
 	printk("Hello, kernel World!\n");
+	printk("  _  _   ____\n");
+	printk(" | || | |___ \\\n");
+	printk(" | || |_  __) |\n");
+	printk(" |__   _|/ __/\n");
+	printk("    |_| |_____|\n");
 	terminal_setcolor(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
-	printk("A %i project...\n", 42);
+	printk("42 - Kernel From Scratch\n");
 
 	while (1) {
-		// Wait for keyboard input
+		update_screen();
 		keyboard_handler();
-				if (has_screen_updated) {
-			update_screen();
-		}
 	}
 }

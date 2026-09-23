@@ -37,7 +37,6 @@ void keyboard_handler(void)
         return;
     }
 
-    has_screen_updated = true;
     uint8_t scancode = inb(0x60);
 
     if (scancode & 0x80) {
@@ -65,6 +64,7 @@ void keyboard_handler(void)
 				current_screen = 3;
 				break;
 		}
+        has_screen_updated = true;
 		update_cursor();
 		return;
 	}

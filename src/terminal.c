@@ -59,6 +59,7 @@ void update_screen(void)
 			terminal_buffer[y * VGA_WIDTH + x] = terminal_fb[current_screen][index];
 		}
 	}
+
 	has_screen_updated = false;
 }
 
@@ -156,6 +157,8 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y)
 
 void terminal_putchar(char c) 
 {
+	has_screen_updated = true;
+
 	if (c == '\n')
 	{
 		if (++terminal_states[current_screen].row != MAX_FB_ROWS)
