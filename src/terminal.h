@@ -3,6 +3,11 @@
 
 # include <stddef.h>
 # include <stdint.h>
+# include "io.h"
+
+#define VGA_WIDTH   80
+#define VGA_HEIGHT  25
+#define VGA_MEMORY  0xB8000
 
 
 /* Hardware text mode color constants. */
@@ -25,7 +30,8 @@ enum vga_color {
 	VGA_COLOR_WHITE = 15,
 };
 
-
+void update_cursor(void);
+void navigate_arrow_keys(uint8_t scancode);
 void terminal_initialize(void);
 void terminal_setcolor(enum vga_color fg, enum vga_color bg);
 void terminal_putchar(char c);

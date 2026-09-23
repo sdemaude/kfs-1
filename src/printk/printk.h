@@ -2,7 +2,7 @@
 # define PRINTK_H
 
 # include <stdarg.h>
-# include "../screen/terminal.h"
+# include "../terminal.h"
 
 
 int	printk(const char *format, ...);
