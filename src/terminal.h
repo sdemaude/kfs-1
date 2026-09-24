@@ -39,6 +39,7 @@ void update_screen(void);
 void navigate_arrow_keys(uint8_t scancode);
 void terminal_initialize(void);
 void terminal_setcolor(enum vga_color fg, enum vga_color bg);
+void terminal_backspace(void);
 void terminal_putchar(char c);
 int terminal_write(const char* data, size_t size);
 void terminal_writestring(const char* data);
