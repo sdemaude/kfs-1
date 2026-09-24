@@ -10,7 +10,7 @@
 #define VGA_HEIGHT  25
 #define VGA_MEMORY  0xB8000
 
-#define MAX_FB_ROWS 75
+#define MAX_FB_ROWS 1024
 
 #define SCREEN_COUNT 4
 

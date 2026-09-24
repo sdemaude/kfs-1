@@ -31,11 +31,16 @@ size_t strlen(const char* str) {
 }
 
 void update_cursor() {
-	if (terminal_states[current_screen].row >= VGA_HEIGHT)
-		terminal_states[current_screen].row = VGA_HEIGHT - 1;
 	if (terminal_states[current_screen].column >= VGA_WIDTH)
 		terminal_states[current_screen].column = VGA_WIDTH - 1;
-	uint16_t pos = terminal_states[current_screen].row * VGA_WIDTH + terminal_states[current_screen].column;
+
+	size_t cursor_row = 0;
+	if (terminal_states[current_screen].row >= terminal_states[current_screen].scroll_row)
+		cursor_row = terminal_states[current_screen].row - terminal_states[current_screen].scroll_row;
+	if (cursor_row >= VGA_HEIGHT)
+		cursor_row = VGA_HEIGHT - 1;
+
+	uint16_t pos = cursor_row * VGA_WIDTH + terminal_states[current_screen].column;
 
 	outb(0x3D4, 0x0F);
 	outb(0x3D5, (uint8_t) (pos & 0xFF));
@@ -58,33 +63,33 @@ void update_screen(void) {
 }
 
 void scroll_up_or_down(int direction) {
+	bool screen_scrolled = false;
+
 	if (direction > 0) {
-		if (terminal_states[current_screen].scroll_row < MAX_FB_ROWS - VGA_HEIGHT && terminal_states[current_screen].row >= VGA_HEIGHT - 1) {
+		if (terminal_states[current_screen].scroll_row < MAX_FB_ROWS - VGA_HEIGHT
+			&& terminal_states[current_screen].row >= terminal_states[current_screen].scroll_row + VGA_HEIGHT - 1) {
 			terminal_states[current_screen].scroll_row++;
+			screen_scrolled = true;
 		}
 	} else if (direction < 0) {
 		if (terminal_states[current_screen].scroll_row > 0) {
 			terminal_states[current_screen].scroll_row--;
+			screen_scrolled = true;
 		}
 	}
+	if (screen_scrolled)
+		has_screen_updated = true;
 	update_cursor();
 }
 
 void navigate_arrow_keys(uint8_t scancode) {
 	switch (scancode) {
-		// TODO : Up/Down arrow dont change the cursor position, they scroll the screen 
-		// case 0x48: // Up arrow
-		// 	if (terminal_states[current_screen].row > 0) {
-		// 		terminal_states[current_screen].row--;
-		// 		scroll_up_or_down(-1);
-		// 	}
-		// 	break;
-		// case 0x50: // Down arrow
-		// 	if (terminal_states[current_screen].row < VGA_HEIGHT - 1) {
-		// 		terminal_states[current_screen].row++;
-		// 		scroll_up_or_down(1);
-		// 	}
-		// 	break;
+		case 0x48: // Up arrow
+			scroll_up_or_down(-1);
+			return;
+		case 0x50: // Down arrow
+			scroll_up_or_down(1);
+			return;
 		case 0x4B: // Left arrow
 			if (terminal_states[current_screen].column > 0) {
 				terminal_states[current_screen].column--;
@@ -139,7 +144,7 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
 	if (x >= VGA_WIDTH || y >= MAX_FB_ROWS) {
 		return;
 	}
-	const size_t index_in_fb = (terminal_states[current_screen].scroll_row + y) * VGA_WIDTH + x;
+	const size_t index_in_fb = y * VGA_WIDTH + x;
 	if (index_in_fb < VGA_WIDTH * MAX_FB_ROWS) {
 		terminal_fb[current_screen][index_in_fb] = vga_entry(c, color);
 	}
@@ -151,7 +156,7 @@ void terminal_backspace() {
 	} else {
 		return; // At the top-left corner, nothing to backspace
 	}
-	const size_t index_in_fb = (terminal_states[current_screen].scroll_row + terminal_states[current_screen].row) * VGA_WIDTH + terminal_states[current_screen].column;
+	const size_t index_in_fb = terminal_states[current_screen].row * VGA_WIDTH + terminal_states[current_screen].column;
 	if (index_in_fb < VGA_WIDTH * MAX_FB_ROWS) {
 		terminal_fb[current_screen][index_in_fb] = vga_entry(' ', terminal_states[current_screen].color);
 	}
