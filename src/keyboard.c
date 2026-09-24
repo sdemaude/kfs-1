@@ -13,16 +13,14 @@ static const char keyboard_map[] = {
    '*', 0, ' '
 };
 
-char scancode_to_ascii(uint8_t scancode)
-{
+char scancode_to_ascii(uint8_t scancode) {
     if (scancode >= sizeof(keyboard_map))
         return 0;
 
     return keyboard_map[scancode];
 }
 
-int ft_memcpy(void *dest, const void *src, size_t n)
-{
+int ft_memcpy(void *dest, const void *src, size_t n) {
 	unsigned char *d = dest;
 	const unsigned char *s = src;
 	for (size_t i = 0; i < n; i++)
@@ -30,8 +28,7 @@ int ft_memcpy(void *dest, const void *src, size_t n)
 	return 0;
 }
 
-void keyboard_handler(void)
-{
+void keyboard_handler(void) {
     // Check if keyboard data is available
     if (!(inb(0x64) & 1)) {
         return;
@@ -39,16 +36,18 @@ void keyboard_handler(void)
 
     uint8_t scancode = inb(0x60);
 
+	// Check if the key is released (scancode with the highest bit set)
     if (scancode & 0x80) {
         return;
     }
 
-	//check if one of the arrow keys is pressed
+	// Check if one of the arrow keys is pressed
 	if (scancode == 0x48 || scancode == 0x50 || scancode == 0x4B || scancode == 0x4D) {
 		navigate_arrow_keys(scancode);
 		return;
 	}
 
+	// Check if one of the F1-F4 keys is pressed
 	if (scancode == 0x3B || scancode == 0x3C || scancode == 0x3D || scancode == 0x3E) {
 		switch (scancode) {
 			case 0x3B: // F1
@@ -66,6 +65,12 @@ void keyboard_handler(void)
 		}
         has_screen_updated = true;
 		update_cursor();
+		return;
+	}
+
+	// Check if the backspace key is pressed
+	if (scancode == 0x0E) {
+		terminal_backspace();
 		return;
 	}
 
