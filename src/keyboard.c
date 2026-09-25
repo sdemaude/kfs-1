@@ -20,14 +20,6 @@ char scancode_to_ascii(uint8_t scancode) {
     return keyboard_map[scancode];
 }
 
-int ft_memcpy(void *dest, const void *src, size_t n) {
-	unsigned char *d = dest;
-	const unsigned char *s = src;
-	for (size_t i = 0; i < n; i++)
-		d[i] = s[i];
-	return 0;
-}
-
 void keyboard_handler(void) {
     // Check if keyboard data is available
     if (!(inb(0x64) & 1)) {
@@ -51,19 +43,19 @@ void keyboard_handler(void) {
 	if (scancode == 0x3B || scancode == 0x3C || scancode == 0x3D || scancode == 0x3E) {
 		switch (scancode) {
 			case 0x3B: // F1
-				current_screen = 0;
+				set_current_screen(0);
 				break;
 			case 0x3C: // F2
-				current_screen = 1;
+				set_current_screen(1);
 				break;
 			case 0x3D: // F3
-				current_screen = 2;
+				set_current_screen(2);
 				break;
 			case 0x3E: // F4
-				current_screen = 3;
+				set_current_screen(3);
 				break;
 		}
-        has_screen_updated = true;
+		set_screen_update_flag();
 		update_cursor();
 		return;
 	}
@@ -71,6 +63,14 @@ void keyboard_handler(void) {
 	// Check if the backspace key is pressed
 	if (scancode == 0x0E) {
 		terminal_backspace();
+		return;
+	}
+
+	// Check if the enter key is pressed
+	if (scancode == 0x1C) {
+		char* current_line = get_current_line();
+		terminal_newline();
+		parse_command(current_line);
 		return;
 	}
 

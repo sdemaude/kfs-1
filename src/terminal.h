@@ -4,11 +4,14 @@
 # include <stddef.h>
 # include <stdint.h>
 # include <stdbool.h>
+
 # include "io.h"
+# include "string/string.h"
 
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
 #define VGA_MEMORY  0xB8000
+#define VGA_DISPLAY_SPACE 0xFF
 
 #define MAX_FB_ROWS 1024
 
@@ -34,18 +37,27 @@ enum vga_color {
 	VGA_COLOR_WHITE = 15,
 };
 
+struct terminal_state {
+	size_t row;
+	size_t column;
+	size_t scroll_row;
+	uint8_t color;
+};
+
+void set_current_screen(int screen);
+void set_screen_update_flag(void);
+char* get_current_screen_buffer(void);
+char* get_current_line(void);
 void update_cursor(void);
 void update_screen(void);
 void navigate_arrow_keys(uint8_t scancode);
+void terminal_initialize_current(void);
 void terminal_initialize(void);
 void terminal_setcolor(enum vga_color fg, enum vga_color bg);
+void terminal_newline(void);
 void terminal_backspace(void);
 void terminal_putchar(char c);
 int terminal_write(const char* data, size_t size);
 void terminal_writestring(const char* data);
-
-extern bool has_screen_updated;
-extern int current_screen;
-
 
 #endif // TERMINAL_H

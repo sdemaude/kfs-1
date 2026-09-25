@@ -1,13 +1,6 @@
 #include "terminal.h"
 
 
-struct terminal_state {
-	size_t row;
-	size_t column;
-	size_t scroll_row;
-	uint8_t color;
-} terminal;
-
 uint16_t* terminal_buffer = (uint16_t*)VGA_MEMORY;
 uint16_t terminal_fb[SCREEN_COUNT][VGA_WIDTH * MAX_FB_ROWS];
 struct terminal_state terminal_states[4];
@@ -15,19 +8,48 @@ bool has_screen_updated = false;
 int current_screen = 0;
 
 
+void set_current_screen(int screen) {
+	if (screen >= 0 && screen < SCREEN_COUNT) {
+		current_screen = screen;
+		has_screen_updated = true;
+		update_cursor();
+	}
+}
+
+void set_screen_update_flag() {
+	has_screen_updated = true;
+}
+
+char* get_current_screen_buffer() {
+	return (char*)terminal_fb[current_screen];
+}
+
+char* get_current_line() {
+	size_t row = terminal_states[current_screen].row;
+	size_t scroll_row = terminal_states[current_screen].scroll_row;
+	size_t start_index = (scroll_row + row) * VGA_WIDTH;
+	static char line_buffer[VGA_WIDTH + 1]; // +1 for null terminator
+
+	while (start_index < (scroll_row + row + 1) * VGA_WIDTH && start_index < VGA_WIDTH * MAX_FB_ROWS) {
+		uint16_t entry = terminal_fb[current_screen][start_index];
+		char c = (char)(entry & 0xFF); // Extract the character from the entry
+		if (c == '\0' || (unsigned char)c == VGA_DISPLAY_SPACE) {
+			break; // Stop at null terminator or space
+		}
+		line_buffer[start_index - (scroll_row + row) * VGA_WIDTH] = c;
+		start_index++;
+	}
+	line_buffer[start_index - (scroll_row + row) * VGA_WIDTH] = '\0';
+	
+	return (char*)line_buffer;
+}
+
 static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) {
 	return fg | bg << 4;
 }
 
 static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
 	return (uint16_t) uc | (uint16_t) color << 8;
-}
-
-size_t strlen(const char* str) {
-	size_t len = 0;
-	while (str[len])
-		len++;
-	return len;
 }
 
 void update_cursor() {
@@ -77,8 +99,10 @@ void scroll_up_or_down(int direction) {
 			screen_scrolled = true;
 		}
 	}
-	if (screen_scrolled)
-		has_screen_updated = true;
+	if (screen_scrolled) {
+		set_screen_update_flag();
+	}
+
 	update_cursor();
 }
 
@@ -113,9 +137,24 @@ void terminal_scroll() {
 		// Clear the new row that will appear at the bottom
 		for (size_t x = 0; x < VGA_WIDTH; x++) {
 			const size_t index = (terminal_states[current_screen].scroll_row + VGA_HEIGHT - 1) * VGA_WIDTH + x;
-			terminal_fb[current_screen][index] = vga_entry(' ', terminal_states[current_screen].color);
+			terminal_fb[current_screen][index] = vga_entry(VGA_DISPLAY_SPACE, terminal_states[current_screen].color);
 		}
 	}
+}
+
+void terminal_initialize_current(void) {
+	terminal_states[current_screen].row = 0;
+	terminal_states[current_screen].column = 0;
+	terminal_states[current_screen].scroll_row = 0;
+	terminal_states[current_screen].color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+
+	for (size_t y = 0; y < MAX_FB_ROWS; y++) {
+		for (size_t x = 0; x < VGA_WIDTH; x++) {
+			const size_t index = y * VGA_WIDTH + x;
+			terminal_fb[current_screen][index] = vga_entry(VGA_DISPLAY_SPACE, terminal_states[current_screen].color);
+		}
+	}
+	update_cursor();
 }
 
 void terminal_initialize(void) {
@@ -129,7 +168,7 @@ void terminal_initialize(void) {
 		for (size_t x = 0; x < VGA_WIDTH; x++) {
 			const size_t index = y * VGA_WIDTH + x;
 			for (int i = 0; i < SCREEN_COUNT; i++) {
-				terminal_fb[i][index] = vga_entry(' ', terminal_states[i].color);
+				terminal_fb[i][index] = vga_entry(VGA_DISPLAY_SPACE, terminal_states[i].color);
 			}
 		}
 	}
@@ -150,6 +189,14 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
 	}
 }
 
+void terminal_newline() {
+	terminal_states[current_screen].row++;
+	terminal_states[current_screen].column = 0;
+
+	set_screen_update_flag();
+	update_cursor();
+}
+
 void terminal_backspace() {
 	if (terminal_states[current_screen].column > 0) {
 		terminal_states[current_screen].column--;
@@ -158,15 +205,15 @@ void terminal_backspace() {
 	}
 	const size_t index_in_fb = terminal_states[current_screen].row * VGA_WIDTH + terminal_states[current_screen].column;
 	if (index_in_fb < VGA_WIDTH * MAX_FB_ROWS) {
-		terminal_fb[current_screen][index_in_fb] = vga_entry(' ', terminal_states[current_screen].color);
+		terminal_fb[current_screen][index_in_fb] = vga_entry(VGA_DISPLAY_SPACE, terminal_states[current_screen].color);
 	}
-	has_screen_updated = true;
+	set_screen_update_flag();
 	update_cursor();
 }
 
 
 void terminal_putchar(char c) {
-	has_screen_updated = true;
+	set_screen_update_flag();
 
 	if (c == '\n') {
 		if (++terminal_states[current_screen].row != MAX_FB_ROWS) {

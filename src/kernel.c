@@ -21,10 +21,10 @@ void kernel_main(void) {
 	terminal_initialize();
 
 	for (int screen = 0; screen < SCREEN_COUNT; screen++) {
-		current_screen = screen;
+		set_current_screen(screen);
 		print_welcome_message(screen + 1);
 	}
-	current_screen = 0;
+	set_current_screen(0); // Start with the first screen
 
 	while (1) {
 		update_screen();
