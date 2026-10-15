@@ -1,6 +1,7 @@
 #include "printk/printk.h"
 #include "terminal.h"
 #include "keyboard.h"
+#include "gdt.h"
 
 
 static void print_welcome_message(int screen_number) {
@@ -18,6 +19,7 @@ static void print_welcome_message(int screen_number) {
 }
 
 void kernel_main(void) {
+	gdt_init();
 	terminal_initialize();
 
 	for (int screen = 0; screen < SCREEN_COUNT; screen++) {
